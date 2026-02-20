@@ -29,5 +29,5 @@ def test_check_github(driver):
 
     driver.get(url)
 
-    assert driver.title != 'GitHub'
+    assert driver.title == 'GitHub · Change is constant. GitHub keeps you ahead. · GitHub'
     assert driver.current_url == url
