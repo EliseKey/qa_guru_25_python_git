@@ -59,8 +59,7 @@ email["clean_body"] = email["body"].replace("\t", " ").replace("\n", " ")
 
 # 10. Сформируйте текст отправленного письма
 email["sent_text"] = f"""Кому: {email["to"]}, от {email["from"]}
-                    Тема: {email["subject"]}, дата {email["date"]} 
-                    {email["clean_body"]}"""
+                    Тема: {email["subject"]}, дата {email["date"]}{email["clean_body"]}"""
 
 # 11. Рассчитайте количество страниц печати
 text_length = len(email["sent_text"])
