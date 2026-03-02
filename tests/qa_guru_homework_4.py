@@ -49,7 +49,7 @@ corporate_domains_list = ['company.ru',
 set_corporate_domains_list = set(corporate_domains_list)
 
 # 7. Проверьте что в списке личных и корпоративных доменов нет пересечений
-common_domains = set_personal_domains_list & set_corporate_domains_list
+common_domains = list(set_personal_domains_list & set_corporate_domains_list)
 
 # 8. Проверьте «корпоративность» отправителя
 is_corporate = domain in set_corporate_domains_list
@@ -58,16 +58,16 @@ is_corporate = domain in set_corporate_domains_list
 email["clean_body"] = email["body"].replace("\t", " ").replace("\n", " ")
 
 # 10. Сформируйте текст отправленного письма
-email[
-    "sent_text"] = f"Кому: {email["to"]}, от {email["from"]} Тема: {email["subject"]}, дата {email["date"]} {email["clean_body"]}"
+email["sent_text"] = f"""Кому: {email["to"]}, от {email["from"]}
+                    Тема: {email["subject"]}, дата {email["date"]}{email["clean_body"]}"""
 
 # 11. Рассчитайте количество страниц печати
 text_length = len(email["sent_text"])
 pages = (text_length + 499) // 500
 
 # 12. Проверьте пустоту темы и тела письма
-is_subject_empty = not email["subject"]
-is_body_empty = not email["body"]
+is_subject_empty = not email["subject"].strip()
+is_body_empty = not email["body"].strip()
 
 # 13. Создайте «маску» e-mail отправителя
 email["masked_from"] = f"{login[:2]}***@{domain}"
