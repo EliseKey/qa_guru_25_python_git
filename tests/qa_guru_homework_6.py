@@ -20,8 +20,8 @@ def clean_body_text(body: str) -> str:
 
 # Формирование итогового текста письма
 def build_sent_text(email: dict) -> str:
-    return f"""Кому: {email["recipient"]}, от {email["sender"]}
-                    Тема: {email["subject"]}, дата {email["date"]} {email["body"]}"""
+    return f"""Кому: {email["recipient"]}, от {email["masked_sender"]}
+                    Тема: {email["subject"]}, дата {email["date"]} {email["short_body"]}"""
 
 
 # Проверка пустоты темы и тела
@@ -41,29 +41,6 @@ def get_correct_email(email_list: list[str]) -> list[str]:
         if '@' in email and email.lower().strip().endswith(('.com', '.ru', '.net')):
             correct_email_list.append(email)
     return correct_email_list
-
-
-# Список emails для проверки работы функции
-test_emails = [
-    # Корректные адреса
-    "user@gmail.com",
-    "admin@company.ru",
-    "test_123@service.net",
-    "Example.User@domain.com",
-    "default@study.com",
-    " hello@corp.ru  ",
-    "user@site.NET",
-    "user@domain.coM",
-    "user.name@domain.ru",
-    "usergmail.com",
-    "user@domain",
-    "user@domain.org",
-    "@mail.ru",
-    "name@.com",
-    "name@domain.comm",
-    "",
-    "   ",
-]
 
 
 # Создание словаря письма
@@ -92,7 +69,7 @@ def sender_email(recipient_list: list[str], subject: str, message: str, *, sende
         print("Ошибка: список получателей пуст")
         return []
 
-    correct_recipient = get_correct_email(test_emails)
+    correct_recipient = get_correct_email(recipient_list)
     if not correct_recipient:
         print(f"Ошибка: email отправителя {sender} некорректен")
         return []
@@ -102,34 +79,40 @@ def sender_email(recipient_list: list[str], subject: str, message: str, *, sende
         print("Ошибка: тема или тело письма пустые")
         return []
 
+    normalized_sender = normalize_addresses(sender)
+    if not get_correct_email([normalized_sender]):
+        print(f"Ошибка: email отправителя {sender} некорректен")
+        return []
+
     filtered_recipients = []
-    for item in recipient_list:
-        if item != sender:
+    for item in correct_recipient:
+        normalized_item = normalize_addresses(item)
+        if normalized_item != normalized_sender:
             filtered_recipients.append(item)
         else:
             print(f"Исключена отправка самому себе: {item}")
 
-    recipient_list = filtered_recipients
+    # Проверка, остались ли получатели после фильтрации
+    if not filtered_recipients:
+        print("Ошибка: нет валидных получателей")
+        return []
+
     cleaned_subject = clean_body_text(subject)
     cleaned_message = clean_body_text(message)
 
-    normalized_recipient_list = [normalize_addresses(recipient)
-                                 for recipient in filtered_recipients]
-
-    normalized_sender = normalize_addresses(sender)
-
     emails = []
 
-    for recipient in normalized_sender:
+    for recipient in filtered_recipients:
         email = create_email(
             normalized_sender, recipient, cleaned_subject, cleaned_message
         )
 
         add_send_date(email)
         login, domain = extract_login_domain(normalized_sender)
-        mask_sender_email(login, domain)
+        email['masked_sender'] = mask_sender_email(login, domain)
         add_short_body(email)
         email["sent_text"] = build_sent_text(email)
         emails.append(email)
 
-        return emails
+    return emails
+
